@@ -1,0 +1,54 @@
+.pagination {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+    list-style: none;
+  }
+  
+  .pagination li {
+    margin: 0 10px; /* Tạo khoảng cách giữa các số trang */
+  }
+  
+  .pagination li a {
+    border: 1px solid #ddd;
+    padding: 5px 10px;
+    cursor: pointer;
+    color: #337ab7;
+    text-align: center; /* Căn giữa nội dung bên trong */
+  }
+  
+  .pagination .active a {
+    background-color: #337ab7;
+    color: white;
+    border-color: #337ab7;
+  }
+  /* Table.css */
+
+.table th {
+  cursor: pointer; /* Thay đổi con trỏ khi di chuột vào tiêu đề cột */
+  user-select: none; /* Ngăn không cho chọn văn bản khi di chuột vào tiêu đề cột */
+}
+
+.table th.sortable {
+  position: relative; /* Để có thể căn chỉnh các ký hiệu sắp xếp */
+}
+
+.table th.sortable::after {
+  content: ''; /* Thêm ký hiệu sắp xếp */
+  position: absolute;
+  right: 10px; /* Căn chỉnh ký hiệu sắp xếp bên phải */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+}
+
+.table th.sortable.asc::after {
+  border-bottom: 5px solid black; /* Ký hiệu sắp xếp tăng dần */
+}
+
+.table th.sortable.desc::after {
+  border-top: 5px solid black; /* Ký hiệu sắp xếp giảm dần */
+}
