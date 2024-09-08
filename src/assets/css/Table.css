@@ -1,54 +1,57 @@
+.pagination-container {
+  display: flex;
+  justify-content: center; /* Căn giữa cả số trang và dropdown */
+  align-items: center; /* Căn giữa theo chiều dọc */
+  margin-top: 20px;
+}
+
 .pagination {
-    display: flex;
-    justify-content: center;
-    padding: 10px 0;
-    list-style: none;
-  }
-  
-  .pagination li {
-    margin: 0 10px; /* Tạo khoảng cách giữa các số trang */
-  }
-  
-  .pagination li a {
-    border: 1px solid #ddd;
-    padding: 5px 10px;
-    cursor: pointer;
-    color: #337ab7;
-    text-align: center; /* Căn giữa nội dung bên trong */
-  }
-  
-  .pagination .active a {
-    background-color: #337ab7;
-    color: white;
-    border-color: #337ab7;
-  }
-  /* Table.css */
-
-.table th {
-  cursor: pointer; /* Thay đổi con trỏ khi di chuột vào tiêu đề cột */
-  user-select: none; /* Ngăn không cho chọn văn bản khi di chuột vào tiêu đề cột */
+  margin: 0;
+  padding: 0;
 }
 
-.table th.sortable {
-  position: relative; /* Để có thể căn chỉnh các ký hiệu sắp xếp */
+.pagination li {
+  margin: 0 5px; /* Khoảng cách giữa các số trang và dropdown */
 }
 
-.table th.sortable::after {
-  content: ''; /* Thêm ký hiệu sắp xếp */
-  position: absolute;
-  right: 10px; /* Căn chỉnh ký hiệu sắp xếp bên phải */
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
+.pagination li a {
+  border: 1px solid #ddd;
+  padding: 5px 10px;
+  cursor: pointer;
+  color: #337ab7;
+  text-align: center; /* Căn giữa nội dung bên trong */
+  font-size: 14px; /* Kích thước chữ đồng nhất */
 }
 
-.table th.sortable.asc::after {
-  border-bottom: 5px solid black; /* Ký hiệu sắp xếp tăng dần */
+.pagination .active a {
+  background-color: #337ab7;
+  color: white;
+  border-color: #337ab7;
 }
 
-.table th.sortable.desc::after {
-  border-top: 5px solid black; /* Ký hiệu sắp xếp giảm dần */
+.page-size-dropdown {
+  margin-left: 10px; /* Khoảng cách giữa số trang và dropdown */
+}
+
+.dropdown-toggle {
+  border: 1px solid #ddd; /* Để dropdown giống với phân trang */
+  padding: 5px 10px; /* Kích thước giống với phân trang */
+  background-color: #007bff; /* Màu nền cho dropdown */
+  color: white; /* Màu chữ cho dropdown */
+  font-size: 14px; /* Kích thước chữ đồng nhất */
+  text-align: center; /* Căn giữa nội dung bên trong */
+}
+
+.dropdown-toggle:hover {
+  background-color: #0056b3; /* Đổi màu khi hover */
+}
+
+.dropdown-menu {
+  border: 1px solid #ddd; /* Giống với border của phân trang */
+  box-shadow: none; /* Không có bóng */
+}
+
+/* Đảm bảo dropdown nằm trên cùng hàng với phân trang */
+.pagination-container > * {
+  margin: 0; /* Loại bỏ margin để phần tử nằm cạnh nhau */
 }

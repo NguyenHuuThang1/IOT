@@ -1,153 +1,140 @@
-/*!
+import React, { useState } from "react";
+import { Card, CardHeader, CardBody, CardTitle, Table, Input, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from "reactstrap";
+import ReactPaginate from "react-paginate";
+import "../assets/css/Table.css";  // CSS cho phân trang
 
-=========================================================
-* Paper Dashboard React - v1.3.2
-=========================================================
+function MeasurementHistoryTable() {
+  const [currentPage, setCurrentPage] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortField, setSortField] = useState("time");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [pageSize, setPageSize] = useState(5);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const pageSizeOptions = [1, 5, 10, 20];
 
-* Product Page: https://www.creative-tim.com/product/paper-dashboard-react
-* Copyright 2023 Creative Tim (https://www.creative-tim.com)
+  const data = [
+    { id: "01", temperature: "20", humidity: "50", light: "50", time: "2023-09-01 20:00" },
+    { id: "02", temperature: "21", humidity: "51", light: "55", time: "2023-09-01 20:30" },
+    { id: "03", temperature: "19", humidity: "49", light: "52", time: "2023-09-01 21:00" },
+    { id: "04", temperature: "22", humidity: "52", light: "58", time: "2023-09-01 21:30" },
+    { id: "05", temperature: "20", humidity: "50", light: "50", time: "2023-09-01 22:00" },
+    { id: "06", temperature: "21", humidity: "51", light: "53", time: "2023-09-01 22:30" },
+    { id: "07", temperature: "23", humidity: "53", light: "56", time: "2023-09-01 23:00" },
+  ];
 
-* Licensed under MIT (https://github.com/creativetimofficial/paper-dashboard-react/blob/main/LICENSE.md)
+  const paginate = (data, pageNumber) => {
+    const start = pageNumber * pageSize;
+    const end = start + pageSize;
+    return data.slice(start, end);
+  };
 
-* Coded by Creative Tim
+  const handlePageClick = (data) => {
+    setCurrentPage(data.selected);
+  };
 
-=========================================================
+  const handleSort = (field) => {
+    const newSortOrder = sortField === field && sortOrder === "asc" ? "desc" : "asc";
+    setSortField(field);
+    setSortOrder(newSortOrder);
+  };
 
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+  const sortData = (data) => {
+    return [...data].sort((a, b) => {
+      const aValue = new Date(a[sortField]);
+      const bValue = new Date(b[sortField]);
+      return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+    });
+  };
 
-*/
-import React from "react";
+  const filteredAndSortedData = sortData(
+    data.filter(item =>
+      item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.temperature.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.humidity.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.light.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.time.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
 
-// reactstrap components
-import { Card, CardHeader, CardBody, Row, Col } from "reactstrap";
+  const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
 
-function Typography() {
+  const handlePageSizeChange = (size) => {
+    setPageSize(size);
+    setCurrentPage(0); // Reset page number on page size change
+  };
+
   return (
-    <>
-      <div className="content">
-        <Row>
-          <Col md="12">
-            <Card>
-              <CardHeader>
-                <h5 className="title">Paper Table Heading</h5>
-                <p className="category">Created using Montserrat Font Family</p>
-              </CardHeader>
-              <CardBody>
-                <div className="typography-line">
-                  <h1>
-                    <span>Header 1</span>
-                    The Life of Paper Dashboard
-                  </h1>
-                </div>
-                <div className="typography-line">
-                  <h2>
-                    <span>Header 2</span>
-                    The Life of Paper Dashboard
-                  </h2>
-                </div>
-                <div className="typography-line">
-                  <h3>
-                    <span>Header 3</span>
-                    The Life of Paper Dashboard
-                  </h3>
-                </div>
-                <div className="typography-line">
-                  <h4>
-                    <span>Header 4</span>
-                    The Life of Paper Dashboard
-                  </h4>
-                </div>
-                <div className="typography-line">
-                  <h5>
-                    <span>Header 5</span>
-                    The Life of Paper Dashboard
-                  </h5>
-                </div>
-                <div className="typography-line">
-                  <h6>
-                    <span>Header 6</span>
-                    The Life of Paper Dashboard
-                  </h6>
-                </div>
-                <div className="typography-line">
-                  <p>
-                    <span>Paragraph</span>I will be the leader of a company that
-                    ends up being worth billions of dollars, because I got the
-                    answers. I understand culture. I am the nucleus. I think
-                    that’s a responsibility that I have, to push possibilities,
-                    to show people, this is the level that things could be at.
-                  </p>
-                </div>
-                <div className="typography-line">
-                  <span>Quote</span>
-                  <blockquote>
-                    <p className="blockquote blockquote-primary">
-                      "I will be the leader of a company that ends up being
-                      worth billions of dollars, because I got the answers. I
-                      understand culture. I am the nucleus. I think that’s a
-                      responsibility that I have, to push possibilities, to show
-                      people, this is the level that things could be at." <br />
-                      <br />
-                      <small>- Noaa</small>
-                    </p>
-                  </blockquote>
-                </div>
-                <div className="typography-line">
-                  <span>Muted Text</span>
-                  <p className="text-muted">
-                    I will be the leader of a company that ends up being worth
-                    billions of dollars, because I got the answers...
-                  </p>
-                </div>
-                <div className="typography-line">
-                  <span>Primary Text</span>
-                  <p className="text-primary">
-                    I will be the leader of a company that ends up being worth
-                    billions of dollars, because I got the answers...
-                  </p>
-                </div>
-                <div className="typography-line">
-                  <span>Info Text</span>
-                  <p className="text-info">
-                    I will be the leader of a company that ends up being worth
-                    billions of dollars, because I got the answers...
-                  </p>
-                </div>
-                <div className="typography-line">
-                  <span>Success Text</span>
-                  <p className="text-success">
-                    I will be the leader of a company that ends up being worth
-                    billions of dollars, because I got the answers...
-                  </p>
-                </div>
-                <div className="typography-line">
-                  <span>Warning Text</span>
-                  <p className="text-warning">
-                    I will be the leader of a company that ends up being worth
-                    billions of dollars, because I got the answers...
-                  </p>
-                </div>
-                <div className="typography-line">
-                  <span>Danger Text</span>
-                  <p className="text-danger">
-                    I will be the leader of a company that ends up being worth
-                    billions of dollars, because I got the answers...
-                  </p>
-                </div>
-                <div className="typography-line">
-                  <h2>
-                    <span>Small Tag</span>
-                    Header with small subtitle <br />
-                    <small>Use "small" tag for the headers</small>
-                  </h2>
-                </div>
-              </CardBody>
-            </Card>
-          </Col>
-        </Row>
-      </div>
-    </>
+    <Card>
+      <CardHeader>
+        <CardTitle tag="h4">Lịch sử đo</CardTitle>
+        <Input
+          type="text"
+          placeholder="Tìm kiếm..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </CardHeader>
+      <CardBody>
+        <Table responsive>
+          <thead className="text-primary">
+            <tr>
+              <th onClick={() => handleSort("id")}>
+                Id {sortField === "id" ? (sortOrder === "asc" ? "↑" : "↓") : ""}
+              </th>
+              <th onClick={() => handleSort("temperature")}>
+                Nhiệt độ {sortField === "temperature" ? (sortOrder === "asc" ? "↑" : "↓") : ""}
+              </th>
+              <th onClick={() => handleSort("humidity")}>
+                Độ ẩm {sortField === "humidity" ? (sortOrder === "asc" ? "↑" : "↓") : ""}
+              </th>
+              <th onClick={() => handleSort("light")}>
+                Ánh sáng {sortField === "light" ? (sortOrder === "asc" ? "↑" : "↓") : ""}
+              </th>
+              <th onClick={() => handleSort("time")} className="text-right">
+                Thời gian {sortField === "time" ? (sortOrder === "asc" ? "↑" : "↓") : ""}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginate(filteredAndSortedData, currentPage).map((item, index) => (
+              <tr key={index}>
+                <td>{item.id}</td>
+                <td>{item.temperature}</td>
+                <td>{item.humidity}</td>
+                <td>{item.light}</td>
+                <td className="text-right">{item.time}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+        <div className="pagination-container">
+          <ReactPaginate
+            previousLabel={"<"}
+            nextLabel={">"}
+            breakLabel={"..."}
+            pageCount={Math.ceil(filteredAndSortedData.length / pageSize)}
+            marginPagesDisplayed={2}
+            pageRangeDisplayed={5}
+            onPageChange={handlePageClick}
+            containerClassName={"pagination"}
+            activeClassName={"active"}
+          />
+          <Dropdown isOpen={dropdownOpen} toggle={toggleDropdown} className="page-size-dropdown">
+            <DropdownToggle caret className="dropdown-toggle">
+              {pageSize}
+            </DropdownToggle>
+            <DropdownMenu>
+              {pageSizeOptions.map((size) => (
+                <DropdownItem key={size} onClick={() => handlePageSizeChange(size)}>
+                  {size}
+                </DropdownItem>
+              ))}
+            </DropdownMenu>
+          </Dropdown>
+        </div>
+      </CardBody>
+    </Card>
   );
 }
 
-export default Typography;
+export default MeasurementHistoryTable;

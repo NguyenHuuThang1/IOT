@@ -1,7 +1,7 @@
 import Dashboard from "views/Dashboard.js";
 import TableList from "views/Tables.js";
 import UserPage from "views/User.js";
-
+import TableList2 from "views/Typography";
 var routes = [
   {
     path: "/dashboard",
@@ -19,9 +19,16 @@ var routes = [
   },
   {
     path: "/tables",
-    name: "Table List",
+    name: "On/Off History",
     icon: "nc-icon nc-tile-56",
     component: <TableList />,
+    layout: "/admin",
+  },
+  {
+    path: "/tables2",
+    name: "Measurement History",
+    icon: "nc-icon nc-tile-56",
+    component: <TableList2 />,
     layout: "/admin",
   },
 ];
