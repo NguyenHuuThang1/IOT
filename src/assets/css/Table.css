@@ -55,3 +55,40 @@
 .pagination-container > * {
   margin: 0; /* Loại bỏ margin để phần tử nằm cạnh nhau */
 }
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.1; }
+}
+
+@keyframes shake {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(2px, 2px); }
+  50% { transform: translate(0, 2px); }
+  75% { transform: translate(2px, 0); }
+  100% { transform: translate(0, 0); }
+}
+
+.icon-spin {
+  animation: spin 2s linear infinite;
+}
+
+.icon-blink {
+  animation: blink 1.5s infinite;
+}
+
+.icon-shake {
+  animation: shake 0.5s infinite;
+}
+.date-filter {
+  display: flex;
+  gap: 10px;
+}
+
+.date-input {
+  width: 50%;
+}

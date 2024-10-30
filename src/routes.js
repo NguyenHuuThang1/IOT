@@ -19,14 +19,14 @@ var routes = [
   },
   {
     path: "/tables",
-    name: "On/Off History",
+    name: "Action History",
     icon: "nc-icon nc-tile-56",
     component: <TableList />,
     layout: "/admin",
   },
   {
     path: "/tables2",
-    name: "Measurement History",
+    name: "Data Sensor",
     icon: "nc-icon nc-tile-56",
     component: <TableList2 />,
     layout: "/admin",
