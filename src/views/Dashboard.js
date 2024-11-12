@@ -43,25 +43,39 @@ function Dashboard() {
   
     // Gọi hàm fetch dữ liệu khi component được render
     fetchData();
-  
+    const savedStates = JSON.parse(localStorage.getItem('deviceStates') || '{}');
+  setIsFanSwitchOn(savedStates.Fan || false);
+  setIsLEDSwitchOn(savedStates.LED || false);
+  setIsACSwitchOn(savedStates.AC || false);
     // Kết nối tới WebSocket để nhận lệnh MQTT từ server
-    const socket = new WebSocket('ws://localhost:8080');
+    // const socket = new WebSocket('ws://localhost:8080');
 
-  socket.onmessage = (event) => {
-    const message = event.data;
+  // socket.onmessage = (event) => {
+  //   const message = event.data;
 
-    if (message.includes('LED1')) {
-      setIsFanOn(message.includes('ON'));  // Chỉ cập nhật icon quạt dựa trên led_status
-    } else if (message.includes('LED2')) {
-      setIsLEDOn(message.includes('ON'));  // Chỉ cập nhật icon LED
-    } else if (message.includes('LED3')) {
-      setIsACOn(message.includes('ON'));   // Chỉ cập nhật icon điều hòa
-    }
-  };
+  //   if (message.includes('LED1')) {
+  //     setIsFanOn(message.includes('ON'));  // Chỉ cập nhật icon quạt dựa trên led_status
+  //   } else if (message.includes('LED2')) {
+  //     setIsLEDOn(message.includes('ON'));  // Chỉ cập nhật icon LED
+  //   } else if (message.includes('LED3')) {
+  //     setIsACOn(message.includes('ON'));   // Chỉ cập nhật icon điều hòa
+  //   }
+  // };
 
-  return () => {
-    socket.close();
-  };
+  // return () => {
+  //   socket.close();
+  // };
+  const interval = setInterval(() => {
+    fetch('http://localhost:5000/api/device-status')
+      .then(response => response.json())
+      .then(data => {
+        setIsFanOn(data.fan);
+        setIsLEDOn(data.led);
+        setIsACOn(data.ac);
+      })
+      .catch(error => console.error('Error fetching device status:', error));
+  }, 2000);
+  return () => clearInterval(interval);
   }, []);
   
 
@@ -93,6 +107,11 @@ function Dashboard() {
     .catch(error => {
       console.error('Error sending command:', error);
     });
+    const updatedStates = {
+      ...JSON.parse(localStorage.getItem('deviceStates') || '{}'),
+      [device]: state,
+    };
+    localStorage.setItem('deviceStates', JSON.stringify(updatedStates));
   };
   
   

@@ -86,7 +86,7 @@ function User() {
                       <FormGroup>
                         <label>Git</label>
                         <Input
-                          defaultValue="Link..."
+                          defaultValue="https://github.com/NguyenHuuThang1/IOT.git"
                           placeholder=""
                           type="text"
                         />
@@ -96,7 +96,7 @@ function User() {
                       <FormGroup>
                         <label>API docs</label>
                         <Input
-                          defaultValue="link..."
+                          defaultValue=""
                           placeholder=""
                           type="text"
                         />

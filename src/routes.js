@@ -1,8 +1,16 @@
+import Bai5 from "views/Bai5.js";
 import Dashboard from "views/Dashboard.js";
 import TableList from "views/Tables.js";
 import UserPage from "views/User.js";
 import TableList2 from "views/Typography";
 var routes = [
+  {
+    path: "/bai5",
+    name: "Bai5",
+    icon: "nc-icon nc-bank",
+    component: <Bai5 />,
+    layout: "/admin",
+  },
   {
     path: "/dashboard",
     name: "Dashboard",

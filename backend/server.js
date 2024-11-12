@@ -8,7 +8,7 @@ const wss = new WebSocket.Server({ port: 8080 });
 
 dotenv.config();
 console.log('Preparing to connect to MQTT broker...');
-const client = mqtt.connect('mqtt://192.168.1.12:1884', {
+const client = mqtt.connect('mqtt://192.168.1.6:1884', {
   username: 'huuthang',
   password: 'B21DCCN667',
 });
@@ -37,25 +37,43 @@ client.on('connect', () => {
 client.on('error', (error) => {
   console.error('MQTT connection error: ', error);
 });
-wss.on('connection', (ws) => {
-  console.log('WebSocket client connected');
-});
-// Nhận tin nhắn từ topic led_control
-client.on('message', (topic, message) => {
-  console.log(`Received message on topic ${topic}: ${message.toString()}`);
-});
+// wss.on('connection', (ws) => {
+//   console.log('1111111111');
+// });
+// // Nhận tin nhắn từ topic led_control
+// client.on('message', (topic, message) => {
+//   console.log(`Received message on topic ${topic}: ${message.toString()}`);
+// });
+// client.on('message', (topic, message) => {
+//   console.log(`Received message on topic ${topic}: ${message.toString()}`);
+  
+//   // Chỉ gửi tin nhắn của topic `led_status` đến WebSocket client
+//   if (topic === 'led_status') {
+//     wss.clients.forEach((client) => {
+//       if (client.readyState === WebSocket.OPEN) {
+//         client.send(message.toString()); // Phát thông điệp đến tất cả WebSocket clients
+//       }
+//     });
+//   }
+// });
+let deviceStatus = {}; // Biến cục bộ lưu trạng thái thiết bị
+
 client.on('message', (topic, message) => {
   console.log(`Received message on topic ${topic}: ${message.toString()}`);
   
-  // Chỉ gửi tin nhắn của topic `led_status` đến WebSocket client
   if (topic === 'led_status') {
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message.toString()); // Phát thông điệp đến tất cả WebSocket clients
-      }
-    });
+    // Lưu trạng thái vào biến cục bộ
+    const parsedMessage = message.toString();
+    if (parsedMessage.includes('LED1')) {
+      deviceStatus.fan = parsedMessage.includes('ON');
+    } else if (parsedMessage.includes('LED2')) {
+      deviceStatus.led = parsedMessage.includes('ON');
+    } else if (parsedMessage.includes('LED3')) {
+      deviceStatus.ac = parsedMessage.includes('ON');
+    }
   }
 });
+
 
 // Tạo ứng dụng Express
 const app = express();
@@ -82,45 +100,7 @@ sql.connect(config)
     console.error('Database connection error: ', err); // Thông báo lỗi kết nối
   });
 
-// Định nghĩa endpoint để lấy dữ liệu cảm biến
-// Định nghĩa endpoint để lấy dữ liệu cảm biến với phân trang
-app.get('/api/sensor-data', async (req, res) => {
-  const page = parseInt(req.query.page) || 1; // Số trang, mặc định là 1
-  const pageSize = parseInt(req.query.pageSize) || 5; // Kích thước trang, mặc định là 5
 
-  try {
-    // Tính toán chỉ số bắt đầu
-    const offset = (page - 1) * pageSize;
-
-    // Lấy tổng số bản ghi
-    const totalCountResult = await sql.query('SELECT COUNT(*) AS total FROM sensor_data');
-    const totalCount = totalCountResult.recordset[0].total;
-
-    // Lấy dữ liệu với phân trang
-    const result = await sql.query(`
-      SELECT * FROM sensor_data
-      ORDER BY timestamp DESC
-      OFFSET ${offset} ROWS FETCH NEXT ${pageSize} ROWS ONLY
-    `);
-    
-    // Gửi dữ liệu về frontend
-    res.json({
-      data: result.recordset,
-      totalItems: totalCount,
-      totalPages: Math.ceil(totalCount / pageSize), // Tổng số trang
-      currentPage: page,
-      pageSize: pageSize,
-    });
-  } catch (err) {
-    console.error('Error retrieving data: ', err); // Thông báo lỗi khi truy vấn
-    res.status(500).send('Error retrieving data');
-  }
-});
-
-
-
-// Định nghĩa endpoint để lấy lịch sử LED
-// Định nghĩa endpoint để lấy lịch sử LED với phân trang
 app.get('/api/led-history', async (req, res) => {
   const page = parseInt(req.query.page) || 1; // Số trang, mặc định là 1
   const pageSize = parseInt(req.query.pageSize) || 5; // Kích thước trang, mặc định là 5
@@ -154,9 +134,6 @@ app.get('/api/led-history', async (req, res) => {
     res.status(500).send('Error retrieving data');
   }
 });
-
-
-
 // API gửi tín hiệu MQTT
 app.post('/send-command', (req, res) => {
   const { topic, payload } = req.body || {};
@@ -248,66 +225,170 @@ app.get('/api/led-history/search', async (req, res) => {
   }
 });
 
-app.get('/api/sensor-data/search', async (req, res) => {
-  const { query, page = 1, pageSize = 5, filterType = 'all', startDate, endDate } = req.query;
+// Endpoint lấy dữ liệu cảm biến với bộ lọc loại dữ liệu và phân trang
+app.get('/api/sensor-data', async (req, res) => {
+  const { type = 'all', page = 1, pageSize = 5, sortField = 'timestamp', sortOrder = 'asc' } = req.query;
+  const currentPage = Math.max(parseInt(page), 1);
+  const currentSize = Math.max(parseInt(pageSize), 1);
+  const offset = (currentPage - 1) * currentSize;
+
+  let filterCondition;
+  switch (type) {
+     case 'temperature':
+        filterCondition = 'temperature IS NOT NULL';
+        break;
+     case 'humidity':
+        filterCondition = 'humidity IS NOT NULL';
+        break;
+     case 'light':
+        filterCondition = 'light IS NOT NULL';
+        break;
+     default:
+        filterCondition = '1=1';
+  }
+
+  const sortColumn = ['temperature', 'humidity', 'light', 'timestamp'].includes(sortField) ? sortField : 'timestamp';
+  const order = sortOrder === 'desc' ? 'DESC' : 'ASC';
 
   try {
-    const pool = await sql.connect(config);
-    const offset = (page - 1) * pageSize;
-    
-    // Log kiểm tra giá trị startDate và endDate nhận được từ frontend
-    console.log("Received startDate:", startDate);
-    console.log("Received endDate:", endDate);
+     const dataQuery = `
+        SELECT * FROM sensor_data
+        WHERE ${filterCondition}
+        ORDER BY ${sortColumn} ${order}
+        OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;
+     `;
+     const countQuery = `
+        SELECT COUNT(*) AS total FROM sensor_data
+        WHERE ${filterCondition};
+     `;
 
+     const pool = await sql.connect(config);
+     const dataResult = await pool.request()
+        .input('offset', sql.Int, offset)
+        .input('pageSize', sql.Int, currentSize)
+        .query(dataQuery);
+     const countResult = await pool.request().query(countQuery);
+
+     res.json({
+        data: dataResult.recordset,
+        totalItems: countResult.recordset[0].total,
+        totalPages: Math.ceil(countResult.recordset[0].total / currentSize),
+        currentPage,
+        pageSize: currentSize,
+     });
+  } catch (err) {
+     console.error('Error retrieving data:', err);
+     res.status(500).send('Error retrieving data');
+  }
+});
+
+// Endpoint tìm kiếm dữ liệu cảm biến với các tham số tìm kiếm và ngày giờ
+app.get('/api/sensor-data/search', async (req, res) => {
+  const { type = 'all', query, page = 1, pageSize = 5, startDate, endDate } = req.query;
+  const currentPage = Math.max(parseInt(page), 1); // Trang ít nhất là 1
+  const currentSize = Math.max(parseInt(pageSize), 1); // pageSize ít nhất là 1
+  const offset = (currentPage - 1) * currentSize; // Tính offset hợp lệ
+
+  // Tiếp tục với logic filterCondition và searchCondition
+  let filterCondition;
+  switch (type) {
+    case 'temperature':
+      filterCondition = 'temperature IS NOT NULL AND CAST(temperature AS NVARCHAR) LIKE \'%\' + @query + \'%\'';
+      break;
+    case 'humidity':
+      filterCondition = 'humidity IS NOT NULL AND CAST(humidity AS NVARCHAR) LIKE \'%\' + @query + \'%\'';
+      break;
+    case 'light':
+      filterCondition = 'light IS NOT NULL AND CAST(light AS NVARCHAR) LIKE \'%\' + @query + \'%\'';
+      break;
+    case 'timestamp':
+      filterCondition = 'CONVERT(NVARCHAR, timestamp, 120) LIKE \'%\' + @query + \'%\'';
+      break;
+    case 'all':
+      filterCondition = `
+         (CAST(temperature AS NVARCHAR) LIKE '%' + @query + '%' OR 
+          CAST(humidity AS NVARCHAR) LIKE '%' + @query + '%' OR 
+          CAST(light AS NVARCHAR) LIKE '%' + @query + '%' OR 
+          CONVERT(NVARCHAR, timestamp, 120) LIKE '%' + @query + '%')
+      `;
+      break;
+    default:
+      filterCondition = '1=1';
+  }
+
+  const searchCondition = `
+    (${filterCondition}) AND
+    (@startDate IS NULL OR timestamp >= @startDate) AND
+    (@endDate IS NULL OR timestamp <= @endDate)
+  `;
+
+  try {
     const searchQuery = `
       SELECT * FROM sensor_data
-      WHERE 
-        (${filterType === 'all' ? '1=1' : `${filterType} IS NOT NULL`}) AND
-        (CAST(id AS NVARCHAR) LIKE '%' + @query + '%' OR
-         CAST(temperature AS NVARCHAR) LIKE '%' + @query + '%' OR
-         CAST(humidity AS NVARCHAR) LIKE '%' + @query + '%' OR
-         CAST(light AS NVARCHAR) LIKE '%' + @query + '%' OR
-         CONVERT(NVARCHAR, timestamp, 120) LIKE '%' + @query + '%') AND
-        (@startDate IS NULL OR timestamp >= @startDate) AND
-        (@endDate IS NULL OR timestamp <= @endDate)
+      WHERE ${searchCondition}
       ORDER BY timestamp DESC
       OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;
     `;
-
     const totalQuery = `
-      SELECT COUNT(*) AS totalItems FROM sensor_data
-      WHERE 
-        (${filterType === 'all' ? '1=1' : `${filterType} IS NOT NULL`}) AND
-        (CAST(id AS NVARCHAR) LIKE '%' + @query + '%' OR
-         CAST(temperature AS NVARCHAR) LIKE '%' + @query + '%' OR
-         CAST(humidity AS NVARCHAR) LIKE '%' + @query + '%' OR
-         CAST(light AS NVARCHAR) LIKE '%' + @query + '%' OR
-         CONVERT(NVARCHAR, timestamp, 120) LIKE '%' + @query + '%') AND
-        (@startDate IS NULL OR timestamp >= @startDate) AND
-        (@endDate IS NULL OR timestamp <= @endDate)
+      SELECT COUNT(*) AS total FROM sensor_data
+      WHERE ${searchCondition};
     `;
 
-    const result = await pool.request()
-      .input('query', sql.NVarChar, query)
+    const pool = await sql.connect(config);
+    const dataResult = await pool.request()
+      .input('query', sql.NVarChar, query || '')
       .input('offset', sql.Int, offset)
-      .input('pageSize', sql.Int, pageSize)
+      .input('pageSize', sql.Int, currentSize)
       .input('startDate', sql.DateTime, startDate ? new Date(startDate) : null)
       .input('endDate', sql.DateTime, endDate ? new Date(endDate) : null)
       .query(searchQuery);
 
-    const totalResult = await pool.request()
-      .input('query', sql.NVarChar, query)
+    const countResult = await pool.request()
+      .input('query', sql.NVarChar, query || '')
       .input('startDate', sql.DateTime, startDate ? new Date(startDate) : null)
       .input('endDate', sql.DateTime, endDate ? new Date(endDate) : null)
       .query(totalQuery);
 
     res.json({
-      data: result.recordset,
-      totalItems: totalResult.recordset[0].totalItems,
+      data: dataResult.recordset,
+      totalItems: countResult.recordset[0].total,
+      totalPages: Math.ceil(countResult.recordset[0].total / currentSize),
+      currentPage,
+      pageSize: currentSize,
     });
+  } catch (err) {
+    console.error('Error fetching data:', err);
+    res.status(500).send('Server error');
+  }
+});
+
+app.get('/api/device-status', (req, res) => {
+  res.json(deviceStatus);
+});
+
+
+app.get('/api/sensor-data/get', async (req, res) => {
+  try {
+    const pool = await sql.connect(config); // Kết nối cơ sở dữ liệu
+    const result = await pool.request().query('SELECT TOP 1 speed FROM sensor_data ORDER BY timestamp DESC');
+    
+    res.json({ data: result.recordset });
   } catch (error) {
     console.error('Error fetching data:', error);
-    res.status(500).send('Server error');
+    res.status(500).send('Error fetching data');
+  }
+});
+
+app.get('/api/sensor-data/recent', async (req, res) => {
+  try {
+    const pool = await sql.connect(config); // Kết nối cơ sở dữ liệu
+    const result = await pool.request()
+      .query('SELECT TOP 5 speed, timestamp FROM sensor_data ORDER BY timestamp DESC'); // Lấy 5 dữ liệu mới nhất
+
+    res.json({ data: result.recordset });
+  } catch (error) {
+    console.error('Error fetching recent data:', error);
+    res.status(500).send('Error fetching recent data');
   }
 });
 

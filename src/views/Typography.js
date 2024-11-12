@@ -1,3 +1,4 @@
+// Đoạn mã trong Typography.js
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardBody, CardTitle, Table, Input, Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Button } from "reactstrap";
 import ReactPaginate from "react-paginate";
@@ -20,7 +21,6 @@ function MeasurementHistoryTable() {
   const pageSizeOptions = [5, 10, 20];
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
 
-  // Tách riêng hàm fetchData
   const fetchData = async () => {
     const formatToLocalISO = (dateStr) => {
       const date = new Date(dateStr);
@@ -28,24 +28,21 @@ function MeasurementHistoryTable() {
     };
   
     const formattedStartDate = startDate ? formatToLocalISO(startDate) : "";
-    
-    // Thêm một giây vào endDate
     const addOneSecond = (dateStr) => {
       const date = new Date(dateStr);
       date.setSeconds(date.getSeconds() + 1);
       return date.toISOString();
     };
-  
     const formattedEndDate = endDate ? addOneSecond(formatToLocalISO(endDate)) : "";
-  
+
     const endpoint = isSearch
-      ? `http://localhost:5000/api/sensor-data/search?query=${searchQuery}&page=${currentPage + 1}&pageSize=${pageSize}&startDate=${formattedStartDate}&endDate=${formattedEndDate}`
-      : `http://localhost:5000/api/sensor-data?page=${currentPage + 1}&pageSize=${pageSize}`;
-  
+    ? `http://localhost:5000/api/sensor-data/search?type=${filterType}&query=${searchQuery}&page=${currentPage}&pageSize=${pageSize}&sortField=${sortField}&sortOrder=${sortOrder}`
+    : `http://localhost:5000/api/sensor-data?type=${filterType}&page=${currentPage}&pageSize=${pageSize}&sortField=${sortField}&sortOrder=${sortOrder}`;
+
     try {
       const response = await fetch(endpoint);
       if (!response.ok) throw new Error("Network response was not ok");
-  
+
       const data = await response.json();
       setSensorData(data.data);
       setTotalItems(data.totalItems);
@@ -53,14 +50,11 @@ function MeasurementHistoryTable() {
       console.error("Error fetching sensor data:", error);
     }
   };
-  
 
-  // Gọi fetchData khi currentPage, pageSize hoặc isSearch thay đổi
   useEffect(() => {
     fetchData();
-  }, [currentPage, pageSize, isSearch]);
+  }, [currentPage, pageSize, isSearch, filterType]);
 
-  // Thay đổi khi tìm kiếm
   const handleSearch = () => {
     setIsSearch(true);
     fetchData();
@@ -69,13 +63,14 @@ function MeasurementHistoryTable() {
   const handlePageClick = (data) => setCurrentPage(data.selected);
   const handlePageSizeChange = (size) => {
     setPageSize(size);
-    setCurrentPage(0);
+    setCurrentPage(1);
   };
 
   const handleSort = (field) => {
     const newSortOrder = sortField === field && sortOrder === "asc" ? "desc" : "asc";
     setSortField(field);
     setSortOrder(newSortOrder);
+    fetchData();
   };
 
   const sortData = (data) => {
@@ -92,18 +87,23 @@ function MeasurementHistoryTable() {
     <Card>
       <CardHeader>
         <CardTitle tag="h4">Lịch sử đo</CardTitle>
+        
         <Input type="select" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-          <option value="all">Tất cả</option>
-          <option value="temperature">Nhiệt độ</option>
-          <option value="humidity">Độ ẩm</option>
-          <option value="light">Ánh sáng</option>
-        </Input>
-        <Input
-          type="text"
-          placeholder="Tìm kiếm..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+   <option value="all">Tất cả</option>
+   <option value="temperature">Nhiệt độ</option>
+   <option value="humidity">Độ ẩm</option>
+   <option value="light">Ánh sáng</option>
+   <option value="timestamp">Thời gian</option> {/* Thêm lựa chọn thời gian */}
+</Input>
+
+
+<Input
+   type="text"
+   placeholder="Tìm kiếm..."
+   value={searchQuery}
+   onChange={(e) => setSearchQuery(e.target.value)}
+/>
+
         <div className="date-filter">
           <Input
             type="text"
@@ -125,44 +125,32 @@ function MeasurementHistoryTable() {
         </div>
       </CardHeader>
       <CardBody>
-        <Table responsive>
-          <thead className="text-primary">
-            <tr>
-              <th onClick={() => handleSort("id")}>Id {sortField === "id" ? (sortOrder === "asc" ? "↑" : "↓") : ""}</th>
-              {(filterType === "temperature" || filterType === "all") && (
-                <th onClick={() => handleSort("temperature")}>
-                  Nhiệt độ {sortField === "temperature" ? (sortOrder === "asc" ? "↑" : "↓") : ""}
-                </th>
-              )}
-              {(filterType === "humidity" || filterType === "all") && (
-                <th onClick={() => handleSort("humidity")}>
-                  Độ ẩm {sortField === "humidity" ? (sortOrder === "asc" ? "↑" : "↓") : ""}
-                </th>
-              )}
-              {(filterType === "light" || filterType === "all") && (
-                <th onClick={() => handleSort("light")}>
-                  Ánh sáng {sortField === "light" ? (sortOrder === "asc" ? "↑" : "↓") : ""}
-                </th>
-              )}
-              <th onClick={() => handleSort("timestamp")} className="text-right">
-                Thời gian {sortField === "timestamp" ? (sortOrder === "asc" ? "↑" : "↓") : ""}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredAndSortedData.map((item, index) => (
-              <tr key={item.id}>
-                <td>{index + 1 + currentPage * pageSize}</td>
-                {(filterType === "temperature" || filterType === "all") && <td>{item.temperature}</td>}
-                {(filterType === "humidity" || filterType === "all") && <td>{item.humidity}</td>}
-                {(filterType === "light" || filterType === "all") && <td>{item.light}</td>}
-                <td className="text-right">
-                  {item.timestamp.split('T')[0]} {item.timestamp.split('T')[1].split('.')[0]}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+      <Table responsive>
+   <thead className="text-primary">
+      <tr>
+        <th onClick={() => handleSort("id")}>Id {sortField === "id" ? (sortOrder === "asc" ? "↑" : "↓") : ""}</th>
+        <th onClick={() => handleSort("temperature")}>Nhiệt độ {sortField === "temperature" ? (sortOrder === "asc" ? "↑" : "↓") : ""}</th>
+        <th onClick={() => handleSort("humidity")}>Độ ẩm {sortField === "humidity" ? (sortOrder === "asc" ? "↑" : "↓") : ""}</th>
+        <th onClick={() => handleSort("light")}>Ánh sáng {sortField === "light" ? (sortOrder === "asc" ? "↑" : "↓") : ""}</th>
+        <th onClick={() => handleSort("timestamp")}>Thời gian {sortField === "timestamp" ? (sortOrder === "asc" ? "↑" : "↓") : ""}</th>
+
+      </tr>
+   </thead>
+   <tbody>
+      {filteredAndSortedData.map((item, index) => (
+         <tr key={item.id}>
+            <td>{index + 1 + currentPage * pageSize}</td>
+            <td>{item.temperature}</td>
+            <td>{item.humidity}</td>
+            <td>{item.light}</td>
+            <td className="text-right">
+               {item.timestamp.split('T')[0]} {item.timestamp.split('T')[1].split('.')[0]}
+            </td>
+         </tr>
+      ))}
+   </tbody>
+</Table>
+
         <div className="pagination-container">
           <ReactPaginate
             previousLabel={"<"}

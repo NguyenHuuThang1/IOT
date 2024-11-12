@@ -81,7 +81,7 @@ client.on_message = on_message
 
 # Kết nối tới MQTT Broker (Mosquitto)
 client.username_pw_set("huuthang", "B21DCCN667")
-client.connect("192.168.1.12", 1884, 60)
+client.connect("192.168.112.36", 1884, 60)
 
 # Bắt đầu vòng lặp để lắng nghe dữ liệu
 client.loop_forever()
